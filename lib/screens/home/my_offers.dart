@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:kctrustedcarpool/cloud_functions/firestore_service.dart';
 import 'package:kctrustedcarpool/screens/home/offer_ride_screen.dart';
+import 'package:kctrustedcarpool/screens/home/ride_management_screen.dart';
 
 class MyOffersScreen extends StatefulWidget {
   @override
@@ -51,19 +52,37 @@ class _MyOffersScreenState extends State<MyOffersScreen> {
                     );
                   },
                 ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => OfferRideScreen()),
-          ).then((_) => fetchOffers()); // Refresh after adding an offer
-        },
-        child: Icon(Icons.add),
-        tooltip: "Offer a Ride",
+      floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          FloatingActionButton.extended(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => OfferRideScreen()),
+              ).then((_) => fetchOffers()); // Refresh after adding an offer
+            },
+            label: Text("Offer Ride"),
+            icon: Icon(Icons.add),
+          ),
+          SizedBox(height: 10),
+          FloatingActionButton.extended(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => RideManagementScreen()),
+              );
+            },
+            label: Text("Manage Requests"),
+            icon: Icon(Icons.manage_accounts),
+            backgroundColor: Colors.blueGrey,
+          ),
+        ],
       ),
     );
   }
 }
+
 
 
 class OfferCard extends StatelessWidget {
