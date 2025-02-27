@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kctrustedcarpool/cloud_functions/firestore_service.dart';
 
 class UpcomingRidesScreen extends StatefulWidget {
   @override
@@ -6,21 +7,28 @@ class UpcomingRidesScreen extends StatefulWidget {
 }
 
 class _UpcomingRidesScreenState extends State<UpcomingRidesScreen> {
-  bool isLoading = false; // Simulating data fetching
-  List<Map<String, String>> upcomingRides = [
-    {
-      "from": "Downtown",
-      "to": "Airport",
-      "date": "March 5, 2025",
-      "time": "10:30 AM"
-    },
-    {
-      "from": "City Center",
-      "to": "University",
-      "date": "March 7, 2025",
-      "time": "8:00 AM"
-    }
-  ];
+  bool isLoading = true; // Start with loading
+  List<Map<String, String>> upcomingRides = [];
+
+  @override
+  void initState() {
+    super.initState();
+    fetchRides();
+  }
+
+  Future<void> fetchRides() async {
+    print("📢 Fetching rides from Firestore...");
+    
+    FirestoreService firestoreService = FirestoreService();
+    List<Map<String, String>> rides = await firestoreService.fetchUpcomingRides();
+
+    print("📢 Rides received: $rides"); // Debugging print
+
+    setState(() {
+      upcomingRides = rides;
+      isLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -74,3 +82,50 @@ class RideCard extends StatelessWidget {
     );
   }
 }
+// import 'package:flutter/material.dart';
+// import 'package:kctrustedcarpool/cloud_functions/firestore_service.dart';
+
+// class UpcomingRidesScreen extends StatefulWidget {
+//   @override
+//   _UpcomingRidesScreenState createState() => _UpcomingRidesScreenState();
+// }
+
+// class _UpcomingRidesScreenState extends State<UpcomingRidesScreen> {
+//   bool isLoading = true; // Start with loading
+//   List<Map<String, String>> upcomingRides = [];
+
+//   @override
+//   void initState() {
+//     super.initState();
+//     fetchRides();
+//   }
+
+//   Future<void> fetchRides() async {
+//     FirestoreService firestoreService = FirestoreService();
+//     List<Map<String, String>> rides = await firestoreService.fetchUpcomingRides();
+
+//     setState(() {
+//       upcomingRides = rides;
+//       isLoading = false;
+//     });
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return isLoading
+//         ? Center(child: CircularProgressIndicator()) // Show loader if data is loading
+//         : upcomingRides.isEmpty
+//             ? Center(child: Text("No upcoming rides available."))
+//             : ListView.builder(
+//                 itemCount: upcomingRides.length,
+//                 itemBuilder: (context, index) {
+//                   return RideCard(
+//                     from: upcomingRides[index]["from"]!,
+//                     to: upcomingRides[index]["to"]!,
+//                     date: upcomingRides[index]["date"]!,
+//                     time: upcomingRides[index]["time"]!,
+//                   );
+//                 },
+//               );
+//   }
+// }
