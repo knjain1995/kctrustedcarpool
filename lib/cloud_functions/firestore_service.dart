@@ -28,4 +28,25 @@ class FirestoreService {
       return [];
     }
   }
+
+    /// Fetches ride offers from Firestore
+  Future<List<Map<String, String>>> fetchRideOffers() async {
+    try {
+      QuerySnapshot snapshot = await _db.collection('offers').get();
+      print("🔥 Firestore Fetch: Found ${snapshot.docs.length} ride offers");
+
+      return snapshot.docs.map((doc) {
+        return {
+          "from": doc["from"]?.toString() ?? "Unknown",
+          "to": doc["to"]?.toString() ?? "Unknown",
+          "date": doc["date"]?.toString() ?? "Unknown",
+          "time": doc["time"]?.toString() ?? "Unknown",
+          "seats": doc["seats"]?.toString() ?? "Unknown",
+        };
+      }).toList();
+    } catch (e) {
+      print("🔥 Firestore Error: $e");
+      return [];
+    }
+  }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kctrustedcarpool/cloud_functions/firestore_service.dart';
 
 class MyOffersScreen extends StatefulWidget {
   @override
@@ -6,28 +7,33 @@ class MyOffersScreen extends StatefulWidget {
 }
 
 class _MyOffersScreenState extends State<MyOffersScreen> {
-  bool isLoading = false; // Simulating data fetching
-  List<Map<String, String>> myOffers = [
-    {
-      "from": "Suburbs",
-      "to": "Downtown",
-      "date": "March 10, 2025",
-      "time": "7:30 AM",
-      "seats": "2"
-    },
-    {
-      "from": "Train Station",
-      "to": "Mall",
-      "date": "March 12, 2025",
-      "time": "9:00 AM",
-      "seats": "3"
-    }
-  ];
+  bool isLoading = true;
+  List<Map<String, String>> myOffers = [];
+
+  @override
+  void initState() {
+    super.initState();
+    fetchOffers();
+  }
+
+  Future<void> fetchOffers() async {
+    print("📢 Fetching ride offers from Firestore...");
+
+    FirestoreService firestoreService = FirestoreService();
+    List<Map<String, String>> offers = await firestoreService.fetchRideOffers();
+
+    print("📢 Offers received: $offers");
+
+    setState(() {
+      myOffers = offers;
+      isLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return isLoading
-        ? Center(child: CircularProgressIndicator()) // Show loader if data is loading
+        ? Center(child: CircularProgressIndicator())
         : myOffers.isEmpty
             ? Center(child: Text("You haven't offered any rides yet."))
             : ListView.builder(
