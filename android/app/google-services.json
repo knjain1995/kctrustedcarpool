@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "430495886304",
+    "project_id": "kctrustedcarpool",
+    "storage_bucket": "kctrustedcarpool.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:430495886304:android:1e7a4072ef985c497a5985",
+        "android_client_info": {
+          "package_name": "com.example.kctrustedcarpool"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAoFLcFQQMXS6Y7Qa9JWOkkvknKDAAxA9A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
