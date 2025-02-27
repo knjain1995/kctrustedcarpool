@@ -3,6 +3,7 @@ import 'package:flutter_login/flutter_login.dart';
 import 'package:provider/provider.dart';
 import '../../cloud_functions/firebase_function.dart';
 import '../../providers/user_state.dart';
+import '../home/home_screen.dart';
 import '../root.dart';
 
 class LoginScreen extends StatelessWidget {
@@ -52,7 +53,7 @@ class LoginScreen extends StatelessWidget {
       ),
       onRecoverPassword: (_) async => "Recover password not implemented",
       onSubmitAnimationCompleted: () {
-        Navigator.of(context).pushReplacementNamed(RootScreen.routeName);
+        Navigator.of(context).pushReplacementNamed(HomeScreen.routeName);
       },
     );
   }
