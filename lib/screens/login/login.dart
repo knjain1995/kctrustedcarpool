@@ -13,12 +13,12 @@ class LoginScreen extends StatelessWidget {
   /// Handles login by fetching user details
   Future<String?> _handleLogin(BuildContext context, String email, String password) async {
     try {
-      final user = await FirebaseFunctions.fetchUserByEmail(email);
+      final user = await FirebaseFunctions.loginUser(email, password); // Now checks email & password
       if (user != null) {
         Provider.of<UserState>(context, listen: false).setCurrentUser(user);
         return null; // Login successful
       } else {
-        return "User not found";
+        return "Invalid email or password";
       }
     } catch (e) {
       return e.toString();
