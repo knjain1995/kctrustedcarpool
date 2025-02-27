@@ -45,6 +45,8 @@ class LoginScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return FlutterLogin(
       title: 'KCTrustedCarpool',
+      savedEmail: "testuser@example.com", // TODO: Remove this line
+      savedPassword: "Test@123", // TODO: Remove this line
       onLogin: (loginData) => _handleLogin(context, loginData.name, loginData.password),
       onSignup: (signupData) => _handleSignup(
         context, 
