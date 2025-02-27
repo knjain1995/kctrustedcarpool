@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:kctrustedcarpool/screens/home/my_offers.dart';
 import 'package:kctrustedcarpool/screens/home/upcoming_rides.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:kctrustedcarpool/screens/login/login.dart';
 
 class HomeScreen extends StatefulWidget {
   static const routeName = '/home';
@@ -10,7 +12,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _selectedIndex = 0; // Tracks selected tab
+  int _selectedIndex = 0;
 
   final List<Widget> _pages = [
     UpcomingRidesScreen(),
@@ -24,13 +26,24 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  void _logout() async {
+    await FirebaseAuth.instance.signOut();
+    Navigator.of(context).pushReplacementNamed(LoginScreen.routeName);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text("KCTrustedCarpool"),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.exit_to_app),
+            onPressed: _logout,
+          ),
+        ],
       ),
-      body: _pages[_selectedIndex], // Display selected tab
+      body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _onTabTapped,

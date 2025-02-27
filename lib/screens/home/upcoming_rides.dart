@@ -7,7 +7,7 @@ class UpcomingRidesScreen extends StatefulWidget {
 }
 
 class _UpcomingRidesScreenState extends State<UpcomingRidesScreen> {
-  bool isLoading = true; // Start with loading
+  bool isLoading = true;
   List<Map<String, String>> upcomingRides = [];
 
   @override
@@ -18,11 +18,11 @@ class _UpcomingRidesScreenState extends State<UpcomingRidesScreen> {
 
   Future<void> fetchRides() async {
     print("📢 Fetching rides from Firestore...");
-    
+
     FirestoreService firestoreService = FirestoreService();
     List<Map<String, String>> rides = await firestoreService.fetchUpcomingRides();
 
-    print("📢 Rides received: $rides"); // Debugging print
+    print("📢 Rides received: $rides");
 
     setState(() {
       upcomingRides = rides;
@@ -32,21 +32,40 @@ class _UpcomingRidesScreenState extends State<UpcomingRidesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return isLoading
-        ? Center(child: CircularProgressIndicator()) // Show loader if data is loading
-        : upcomingRides.isEmpty
-            ? Center(child: Text("No upcoming rides available."))
-            : ListView.builder(
-                itemCount: upcomingRides.length,
-                itemBuilder: (context, index) {
-                  return RideCard(
-                    from: upcomingRides[index]["from"]!,
-                    to: upcomingRides[index]["to"]!,
-                    date: upcomingRides[index]["date"]!,
-                    time: upcomingRides[index]["time"]!,
-                  );
-                },
-              );
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Upcoming Rides"),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.refresh),
+            onPressed: () {
+              setState(() {
+                isLoading = true;
+              });
+              fetchRides();
+            },
+          ),
+        ],
+      ),
+      body: RefreshIndicator(
+        onRefresh: fetchRides,
+        child: isLoading
+            ? Center(child: CircularProgressIndicator())
+            : upcomingRides.isEmpty
+                ? Center(child: Text("No upcoming rides available."))
+                : ListView.builder(
+                    itemCount: upcomingRides.length,
+                    itemBuilder: (context, index) {
+                      return RideCard(
+                        from: upcomingRides[index]["from"]!,
+                        to: upcomingRides[index]["to"]!,
+                        date: upcomingRides[index]["date"]!,
+                        time: upcomingRides[index]["time"]!,
+                      );
+                    },
+                  ),
+      ),
+    );
   }
 }
 
@@ -82,6 +101,7 @@ class RideCard extends StatelessWidget {
     );
   }
 }
+
 // import 'package:flutter/material.dart';
 // import 'package:kctrustedcarpool/cloud_functions/firestore_service.dart';
 

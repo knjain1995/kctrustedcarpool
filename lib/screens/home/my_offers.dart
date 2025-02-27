@@ -32,22 +32,41 @@ class _MyOffersScreenState extends State<MyOffersScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return isLoading
-        ? Center(child: CircularProgressIndicator())
-        : myOffers.isEmpty
-            ? Center(child: Text("You haven't offered any rides yet."))
-            : ListView.builder(
-                itemCount: myOffers.length,
-                itemBuilder: (context, index) {
-                  return OfferCard(
-                    from: myOffers[index]["from"]!,
-                    to: myOffers[index]["to"]!,
-                    date: myOffers[index]["date"]!,
-                    time: myOffers[index]["time"]!,
-                    seats: myOffers[index]["seats"]!,
-                  );
-                },
-              );
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("My Offers"),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.refresh),
+            onPressed: () {
+              setState(() {
+                isLoading = true;
+              });
+              fetchOffers();
+            },
+          ),
+        ],
+      ),
+      body: RefreshIndicator(
+        onRefresh: fetchOffers,
+        child: isLoading
+            ? Center(child: CircularProgressIndicator())
+            : myOffers.isEmpty
+                ? Center(child: Text("You haven't offered any rides yet."))
+                : ListView.builder(
+                    itemCount: myOffers.length,
+                    itemBuilder: (context, index) {
+                      return OfferCard(
+                        from: myOffers[index]["from"]!,
+                        to: myOffers[index]["to"]!,
+                        date: myOffers[index]["date"]!,
+                        time: myOffers[index]["time"]!,
+                        seats: myOffers[index]["seats"]!,
+                      );
+                    },
+                  ),
+      ),
+    );
   }
 }
 
