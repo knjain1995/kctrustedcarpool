@@ -9,6 +9,7 @@ class OnboardingScreen extends StatefulWidget {
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
+  final PageController _pageController = PageController();
   int currentIndex = 0;
 
   final List<Map<String, String>> onboardingData = [
@@ -31,9 +32,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   void nextPage() {
     if (currentIndex < onboardingData.length - 1) {
-      setState(() {
-        currentIndex++;
-      });
+      _pageController.nextPage(
+        duration: Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
     } else {
       Navigator.of(context).pushReplacementNamed(LoginScreen.routeName);
     }
@@ -43,41 +45,96 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Expanded(
-            flex: 3,
-            child: Image.asset(onboardingData[currentIndex]["image"]!, fit: BoxFit.cover),
-          ),
-          Expanded(
-            flex: 2,
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    onboardingData[currentIndex]["title"]!,
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                    textAlign: TextAlign.center,
-                  ),
-                  SizedBox(height: 10),
-                  Text(
-                    onboardingData[currentIndex]["description"]!,
-                    style: TextStyle(fontSize: 16),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
+            flex: 4,
+            child: PageView.builder(
+              controller: _pageController,
+              itemCount: onboardingData.length,
+              onPageChanged: (index) {
+                setState(() {
+                  currentIndex = index;
+                });
+              },
+              itemBuilder: (context, index) => OnboardingPage(
+                image: onboardingData[index]["image"]!,
+                title: onboardingData[index]["title"]!,
+                description: onboardingData[index]["description"]!,
               ),
             ),
           ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(
+              onboardingData.length,
+              (index) => buildDot(index),
+            ),
+          ),
+          SizedBox(height: 20),
           ElevatedButton(
             onPressed: nextPage,
             child: Text(currentIndex < onboardingData.length - 1 ? "Next" : "Get Started"),
           ),
-          SizedBox(height: 20),
+          SizedBox(height: 40),
         ],
       ),
+    );
+  }
+
+  Widget buildDot(int index) {
+    return AnimatedContainer(
+      duration: Duration(milliseconds: 300),
+      margin: EdgeInsets.symmetric(horizontal: 5),
+      height: 8,
+      width: currentIndex == index ? 16 : 8,
+      decoration: BoxDecoration(
+        color: currentIndex == index ? Colors.blue : Colors.grey,
+        borderRadius: BorderRadius.circular(4),
+      ),
+    );
+  }
+}
+
+class OnboardingPage extends StatelessWidget {
+  final String image, title, description;
+
+  const OnboardingPage({
+    required this.image,
+    required this.title,
+    required this.description,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Expanded(
+          flex: 3,
+          child: Image.asset(image, fit: BoxFit.cover),
+        ),
+        Expanded(
+          flex: 2,
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 10),
+                Text(
+                  description,
+                  style: TextStyle(fontSize: 16),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
