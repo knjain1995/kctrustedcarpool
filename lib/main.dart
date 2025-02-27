@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
-import 'screens/login/login_screen.dart';
+import 'screens/login/login.dart';
+import 'screens/root.dart';
 import 'providers/user_state.dart';
 
 void main() async {
@@ -17,7 +18,11 @@ class MyApp extends StatelessWidget {
       create: (context) => UserState(),
       child: MaterialApp(
         title: 'KCTrustedCarpool',
-        home: LoginScreen(),
+        initialRoute: LoginScreen.routeName,
+        routes: {
+          LoginScreen.routeName: (context) => LoginScreen(),
+          RootScreen.routeName: (context) => RootScreen(),
+        },
       ),
     );
   }

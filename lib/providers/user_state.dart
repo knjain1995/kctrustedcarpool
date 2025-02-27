@@ -1,5 +1,5 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user_model.dart';
 
 class UserState extends ChangeNotifier {
@@ -7,6 +7,12 @@ class UserState extends ChangeNotifier {
   UserModel? _user;
 
   UserModel? get user => _user;
+
+  /// Sets the current user after login
+  void setCurrentUser(UserModel user) {
+    _user = user;
+    notifyListeners();
+  }
 
   Future<void> login(String email, String password) async {
     try {
