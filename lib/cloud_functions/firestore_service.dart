@@ -46,6 +46,26 @@ class FirestoreService {
     }
   }
 
+    /// Allows a user to offer a ride
+  Future<void> offerRide(String from, String to, String date, String time, String seats) async {
+    try {
+      String userId = FirebaseAuth.instance.currentUser?.uid ?? "unknown_user";
+
+      await _db.collection('offers').add({
+        "userId": userId,
+        "from": from,
+        "to": to,
+        "date": date,
+        "time": time,
+        "seats": seats,
+      });
+
+      print("✅ Ride offer saved successfully!");
+    } catch (e) {
+      print("🔥 Firestore Error: $e");
+    }
+  }
+
     /// Fetches ride offers from Firestore
   Future<List<Map<String, String>>> fetchRideOffers() async {
     try {

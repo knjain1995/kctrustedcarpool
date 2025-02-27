@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kctrustedcarpool/cloud_functions/firestore_service.dart';
+import 'package:kctrustedcarpool/screens/home/offer_ride_screen.dart';
 
 class MyOffersScreen extends StatefulWidget {
   @override
@@ -9,6 +10,7 @@ class MyOffersScreen extends StatefulWidget {
 class _MyOffersScreenState extends State<MyOffersScreen> {
   bool isLoading = true;
   List<Map<String, String>> myOffers = [];
+  FirestoreService firestoreService = FirestoreService();
 
   @override
   void initState() {
@@ -19,7 +21,6 @@ class _MyOffersScreenState extends State<MyOffersScreen> {
   Future<void> fetchOffers() async {
     print("📢 Fetching ride offers from Firestore...");
 
-    FirestoreService firestoreService = FirestoreService();
     List<Map<String, String>> offers = await firestoreService.fetchRideOffers();
 
     print("📢 Offers received: $offers");
@@ -33,42 +34,37 @@ class _MyOffersScreenState extends State<MyOffersScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("My Offers"),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.refresh),
-            onPressed: () {
-              setState(() {
-                isLoading = true;
-              });
-              fetchOffers();
-            },
-          ),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: fetchOffers,
-        child: isLoading
-            ? Center(child: CircularProgressIndicator())
-            : myOffers.isEmpty
-                ? Center(child: Text("You haven't offered any rides yet."))
-                : ListView.builder(
-                    itemCount: myOffers.length,
-                    itemBuilder: (context, index) {
-                      return OfferCard(
-                        from: myOffers[index]["from"]!,
-                        to: myOffers[index]["to"]!,
-                        date: myOffers[index]["date"]!,
-                        time: myOffers[index]["time"]!,
-                        seats: myOffers[index]["seats"]!,
-                      );
-                    },
-                  ),
+      appBar: AppBar(title: Text("My Offers")),
+      body: isLoading
+          ? Center(child: CircularProgressIndicator())
+          : myOffers.isEmpty
+              ? Center(child: Text("You haven't offered any rides yet."))
+              : ListView.builder(
+                  itemCount: myOffers.length,
+                  itemBuilder: (context, index) {
+                    return OfferCard(
+                      from: myOffers[index]["from"]!,
+                      to: myOffers[index]["to"]!,
+                      date: myOffers[index]["date"]!,
+                      time: myOffers[index]["time"]!,
+                      seats: myOffers[index]["seats"]!,
+                    );
+                  },
+                ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => OfferRideScreen()),
+          ).then((_) => fetchOffers()); // Refresh after adding an offer
+        },
+        child: Icon(Icons.add),
+        tooltip: "Offer a Ride",
       ),
     );
   }
 }
+
 
 class OfferCard extends StatelessWidget {
   final String from, to, date, time, seats;
