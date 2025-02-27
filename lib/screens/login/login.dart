@@ -1,23 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_login/flutter_login.dart';
+import 'package:provider/provider.dart';
 import '../../cloud_functions/firebase_function.dart';
 import '../../providers/user_state.dart';
 import '../root.dart';
-import 'package:provider/provider.dart';
 
 class LoginScreen extends StatelessWidget {
   static const routeName = '/login';
 
   Duration get loginTime => const Duration(milliseconds: 1000);
 
+  /// Handles login by fetching user details
   Future<String?> _handleLogin(BuildContext context, String email, String password) async {
     try {
       final user = await FirebaseFunctions.fetchUserByEmail(email);
       if (user != null) {
         Provider.of<UserState>(context, listen: false).setCurrentUser(user);
-        return null; // Success
+        return null; // Login successful
       } else {
         return "User not found";
+      }
+    } catch (e) {
+      return e.toString();
+    }
+  }
+
+  /// Handles user signup and creates a new user in Firebase
+  Future<String?> _handleSignup(BuildContext context, String email, String password) async {
+    try {
+      final newUser = await FirebaseFunctions.signUpUser(email, password);
+      if (newUser != null) {
+        Provider.of<UserState>(context, listen: false).setCurrentUser(newUser);
+        return null; // Signup successful
+      } else {
+        return "Signup failed. Try again.";
       }
     } catch (e) {
       return e.toString();
@@ -29,7 +45,11 @@ class LoginScreen extends StatelessWidget {
     return FlutterLogin(
       title: 'KCTrustedCarpool',
       onLogin: (loginData) => _handleLogin(context, loginData.name, loginData.password),
-      onSignup: (_) async => "Signup not implemented",
+      onSignup: (signupData) => _handleSignup(
+        context, 
+        signupData.name ?? "",  // Ensure a non-null value for email
+        signupData.password ?? "" // Ensure a non-null value for password
+      ),
       onRecoverPassword: (_) async => "Recover password not implemented",
       onSubmitAnimationCompleted: () {
         Navigator.of(context).pushReplacementNamed(RootScreen.routeName);
