@@ -1,5 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+
 
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -97,43 +102,107 @@ class FirestoreService {
   }
 
   /// Allows a user to request a ride
-  Future<void> requestRide(String rideId, String from, String to, String date, String time) async {
-    try {
-      String userId = FirebaseAuth.instance.currentUser?.uid ?? "unknown_user";
+Future<void> requestRide(String rideId, String from, String to, String date, String time) async {
+  try {
+    String userId = FirebaseAuth.instance.currentUser?.uid ?? "unknown_user";
 
-      // Get the ride details to extract rideOwnerId
-      DocumentSnapshot rideDoc = await _db.collection('rides').doc(rideId).get();
-      String rideOwnerId = rideDoc.exists ? rideDoc["userId"] ?? "unknown_owner" : "unknown_owner";
+    // Get the ride details to extract rideOwnerId
+    DocumentSnapshot rideDoc = await _db.collection('rides').doc(rideId).get();
+    String rideOwnerId = rideDoc.exists ? rideDoc["userId"] ?? "unknown_owner" : "unknown_owner";
 
-      await _db.collection('ride_requests').add({
-        "userId": userId,
-        "rideId": rideId,
-        "from": from,
-        "to": to,
-        "date": date,
-        "time": time,
-        "status": "pending",
-        "rideOwnerId": rideOwnerId, // ✅ Now added to Firestore
-      });
+    // Store ride request in Firestore
+    await _db.collection('ride_requests').add({
+      "userId": userId,
+      "rideId": rideId,
+      "from": from,
+      "to": to,
+      "date": date,
+      "time": time,
+      "status": "pending",
+      "rideOwnerId": rideOwnerId,
+    });
 
-      print("✅ Ride request sent successfully!");
-    } catch (e) {
-      print("🔥 Firestore Error: $e");
+    print("✅ Ride request sent successfully!");
+
+    // Fetch ride owner's FCM token
+    DocumentSnapshot userDoc = await _db.collection('users').doc(rideOwnerId).get();
+    if (userDoc.exists && userDoc["fcmToken"] != null) {
+      String rideOwnerToken = userDoc["fcmToken"];
+      sendNotification(rideOwnerToken, "New Ride Request!", "Someone has requested your ride from $from to $to.");
     }
+  } catch (e) {
+    print("🔥 Firestore Error: $e");
   }
+}
 
   /// Updates the status of a ride request (accept or reject)
-  Future<void> updateRideRequestStatus(String requestId, String status) async {
-    try {
-      await _db.collection('ride_requests').doc(requestId).update({
-        "status": status,
-      });
+Future<void> updateRideRequestStatus(String requestId, String status) async {
+  try {
+    DocumentSnapshot requestDoc = await _db.collection('ride_requests').doc(requestId).get();
+    if (!requestDoc.exists) return;
 
-      print("✅ Ride request updated: $status");
+    String userId = requestDoc["userId"];
+    String from = requestDoc["from"];
+    String to = requestDoc["to"];
+
+    await _db.collection('ride_requests').doc(requestId).update({
+      "status": status,
+    });
+
+    print("✅ Ride request updated: $status");
+
+    // Notify the requester
+    DocumentSnapshot userDoc = await _db.collection('users').doc(userId).get();
+    if (userDoc.exists && userDoc["fcmToken"] != null) {
+      String requesterToken = userDoc["fcmToken"];
+      sendNotification(requesterToken, "Ride Request $status", "Your ride request from $from to $to was $status.");
+    }
+  } catch (e) {
+    print("🔥 Firestore Error: $e");
+  }
+}
+
+  /// Stores FCM token for the logged-in user
+  Future<void> saveUserFCMToken() async {
+    try {
+      String userId = FirebaseAuth.instance.currentUser?.uid ?? "unknown_user";
+      String? token = await FirebaseMessaging.instance.getToken();
+
+      if (token != null) {
+        await _db.collection('users').doc(userId).set({
+          "fcmToken": token,
+        }, SetOptions(merge: true));
+
+        print("✅ FCM Token saved successfully!");
+      }
     } catch (e) {
       print("🔥 Firestore Error: $e");
     }
   }
+
+
+  Future<void> sendNotification(String token, String title, String body) async {
+  const String serverKey = "YOUR_FIREBASE_SERVER_KEY"; // Replace with your Firebase Server Key
+
+  final response = await http.post(
+    Uri.parse('https://fcm.googleapis.com/fcm/send'),
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "key=$serverKey",
+    },
+    body: jsonEncode({
+      "to": token,
+      "notification": {
+        "title": title,
+        "body": body,
+        "sound": "default",
+      }
+    }),
+  );
+
+  print("📢 Notification Sent: ${response.body}");
+}
+
 }
 
 
@@ -194,3 +263,46 @@ class FirestoreService {
 //     }
 //   } 
 // }
+
+
+
+  // /// Allows a user to request a ride
+  // Future<void> requestRide(String rideId, String from, String to, String date, String time) async {
+  //   try {
+  //     String userId = FirebaseAuth.instance.currentUser?.uid ?? "unknown_user";
+
+  //     // Get the ride details to extract rideOwnerId
+  //     DocumentSnapshot rideDoc = await _db.collection('rides').doc(rideId).get();
+  //     String rideOwnerId = rideDoc.exists ? rideDoc["userId"] ?? "unknown_owner" : "unknown_owner";
+
+  //     await _db.collection('ride_requests').add({
+  //       "userId": userId,
+  //       "rideId": rideId,
+  //       "from": from,
+  //       "to": to,
+  //       "date": date,
+  //       "time": time,
+  //       "status": "pending",
+  //       "rideOwnerId": rideOwnerId, // ✅ Now added to Firestore
+  //     });
+
+  //     print("✅ Ride request sent successfully!");
+  //   } catch (e) {
+  //     print("🔥 Firestore Error: $e");
+  //   }
+  // }
+
+
+  //   /// Updates the status of a ride request (accept or reject)
+  // Future<void> updateRideRequestStatus(String requestId, String status) async {
+  //   try {
+  //     await _db.collection('ride_requests').doc(requestId).update({
+  //       "status": status,
+  //     });
+
+  //     print("✅ Ride request updated: $status");
+  //   } catch (e) {
+  //     print("🔥 Firestore Error: $e");
+  //   }
+  // }
+  

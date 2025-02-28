@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:kctrustedcarpool/firebase_options.dart';
 import 'package:provider/provider.dart';
 import 'screens/login/login.dart';
@@ -13,6 +14,22 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
 );
+  
+  FirebaseMessaging messaging = FirebaseMessaging.instance;
+
+  // Request permission for notifications
+  NotificationSettings settings = await messaging.requestPermission(
+    alert: true,
+    badge: true,
+    sound: true,
+  );
+
+  if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+    print('✅ Notifications Permission Granted');
+  } else {
+    print('❌ Notifications Permission Denied');
+  }
+
   runApp(MyApp());
 }
 

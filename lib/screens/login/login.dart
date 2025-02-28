@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_login/flutter_login.dart';
 import 'package:provider/provider.dart';
 import '../../cloud_functions/firebase_function.dart';
+import '../../cloud_functions/firestore_service.dart';
 import '../../providers/user_state.dart';
 import '../home/home_screen.dart';
 import '../root.dart';
+
 
 class LoginScreen extends StatelessWidget {
   static const routeName = '/login';
@@ -55,6 +57,7 @@ class LoginScreen extends StatelessWidget {
       ),
       onRecoverPassword: (_) async => "Recover password not implemented",
       onSubmitAnimationCompleted: () {
+        FirestoreService().saveUserFCMToken(); // ✅ Store FCM token
         Navigator.of(context).pushReplacementNamed(HomeScreen.routeName);
       },
     );

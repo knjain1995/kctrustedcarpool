@@ -43,3 +43,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# added to avoiud exposing keys publicly
+lib/firebase_options.dart
+/firebase-service-account.json
