@@ -1,9 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:googleapis_auth/auth_io.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
+import 'dart:io';
+import 'package:googleapis_auth/googleapis_auth.dart';
+// import 'package:googleapis/firebasemessaging/v1.dart' as fcm;
+import 'package:flutter/services.dart';
 
 
 class FirestoreService {
@@ -181,27 +185,38 @@ Future<void> updateRideRequestStatus(String requestId, String status) async {
   }
 
 
+  /// Sends a notification using FCM v1 API
   Future<void> sendNotification(String token, String title, String body) async {
-  const String serverKey = "YOUR_FIREBASE_SERVER_KEY"; // Replace with your Firebase Server Key
+    try {
+      // Load service account credentials
+      String jsonString = await rootBundle.loadString('assets/firebase-service-account.json');
+      final credentials = ServiceAccountCredentials.fromJson(jsonDecode(jsonString));
 
-  final response = await http.post(
-    Uri.parse('https://fcm.googleapis.com/fcm/send'),
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": "key=$serverKey",
-    },
-    body: jsonEncode({
-      "to": token,
-      "notification": {
-        "title": title,
-        "body": body,
-        "sound": "default",
-      }
-    }),
-  );
+      // Authenticate with Google Cloud
+      final client = await clientViaServiceAccount(credentials, ['https://www.googleapis.com/auth/firebase.messaging']);
 
-  print("📢 Notification Sent: ${response.body}");
-}
+      // Create FCM API request
+      final url = Uri.parse('https://fcm.googleapis.com/v1/projects/kctrustedcarpool/messages:send');
+      final message = {
+        "message": {
+          "token": token,
+          "notification": {
+            "title": title,
+            "body": body,
+          }
+        }
+      };
+
+      // Send the request
+      final response = await client.post(url, body: jsonEncode(message), headers: {
+        "Content-Type": "application/json",
+      });
+
+      print("📢 FCM Notification Response: ${response.body}");
+    } catch (e) {
+      print("🔥 FCM Error: $e");
+    }
+  }
 
 }
 
@@ -306,3 +321,25 @@ Future<void> updateRideRequestStatus(String requestId, String status) async {
   //   }
   // }
   
+
+//     Future<void> sendNotification(String token, String title, String body) async {
+//   const String serverKey = "YOUR_FIREBASE_SERVER_KEY"; // Replace with your Firebase Server Key
+
+//   final response = await http.post(
+//     Uri.parse('https://fcm.googleapis.com/fcm/send'),
+//     headers: {
+//       "Content-Type": "application/json",
+//       "Authorization": "key=$serverKey",
+//     },
+//     body: jsonEncode({
+//       "to": token,
+//       "notification": {
+//         "title": title,
+//         "body": body,
+//         "sound": "default",
+//       }
+//     }),
+//   );
+
+//   print("📢 Notification Sent: ${response.body}");
+// }

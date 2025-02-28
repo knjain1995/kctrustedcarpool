@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:kctrustedcarpool/cloud_functions/firestore_service.dart';
 import 'package:kctrustedcarpool/firebase_options.dart';
 import 'package:provider/provider.dart';
 import 'screens/login/login.dart';
@@ -29,6 +30,13 @@ void main() async {
   } else {
     print('❌ Notifications Permission Denied');
   }
+
+
+  // // MANUALLY TEST NOTIFICATIONS
+  // // Replace this token with your actual FCM token from Firestore
+  // String testFCMToken = "ferwpvQoRguL2_r6aqFXtE:APA91bH0u_fBtBe-13Gi_RJa73SSHrV2Vo-meHO5vZH2cKQEROOeykKwvelwId7qqNGe9rvBzGgZkcyelJvLRWXNG_x7dtjU6oRwcwLfuMaJ7qnZ0POOQKA";
+  // // Call sendNotification() manually to test FCM
+  // FirestoreService().sendNotification(testFCMToken, "Test Notification", "This is a test message from FCM v1 API.");
 
   runApp(MyApp());
 }
