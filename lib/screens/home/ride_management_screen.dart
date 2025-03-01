@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:kctrustedcarpool/cloud_functions/firestore_service.dart';
 
+import '../chat/chat_screen.dart';
+
 class RideManagementScreen extends StatefulWidget {
   @override
   _RideManagementScreenState createState() => _RideManagementScreenState();
@@ -92,6 +94,20 @@ class RideRequestCard extends StatelessWidget {
                   onPressed: () => onUpdateStatus(request["requestId"]!, "rejected"),
                   child: Text("Reject"),
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                ),
+                IconButton(
+                  icon: Icon(Icons.chat),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ChatScreen(
+                          receiverId: request["userId"]!,
+                          receiverName: "User ${request["userId"]!}", // Replace with actual name from Firestore
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ],
             ),

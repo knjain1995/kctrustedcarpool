@@ -223,7 +223,56 @@ Future<void> updateRideRequestStatus(String requestId, String status) async {
 
 }
 
+class ChatService {
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
 
+  /// Starts a chat between two users and returns the chat ID
+  Future<String> startChat(String receiverId) async {
+    String currentUserId = FirebaseAuth.instance.currentUser?.uid ?? "unknown_user";
+
+    // Check if a chat already exists between these users
+    QuerySnapshot query = await _db
+        .collection('chats')
+        .where('users', arrayContains: currentUserId)
+        .get();
+
+    for (var doc in query.docs) {
+      List<dynamic> users = doc['users'];
+      if (users.contains(receiverId)) {
+        return doc.id; // Chat already exists
+      }
+    }
+
+    // If no chat exists, create a new chat
+    DocumentReference newChatRef = await _db.collection('chats').add({
+      "users": [currentUserId, receiverId],
+    });
+
+    return newChatRef.id;
+  }
+
+  /// Sends a message in a chat
+  Future<void> sendMessage(String chatId, String messageText, String receiverId) async {
+    String senderId = FirebaseAuth.instance.currentUser?.uid ?? "unknown_user";
+
+    await _db.collection('chats').doc(chatId).collection('messages').add({
+      "senderId": senderId,
+      "receiverId": receiverId,
+      "text": messageText,
+      "timestamp": FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Fetches messages in a chat and listens for updates
+  Stream<QuerySnapshot> getChatMessages(String chatId) {
+    return _db
+        .collection('chats')
+        .doc(chatId)
+        .collection('messages')
+        .orderBy('timestamp', descending: false)
+        .snapshots();
+  }
+}
 
 
 
