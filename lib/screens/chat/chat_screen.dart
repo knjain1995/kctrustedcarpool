@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:kctrustedcarpool/cloud_functions/firestore_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart'; // For formatting timestamps
 
 class ChatScreen extends StatefulWidget {
   final String receiverId;
@@ -17,6 +18,7 @@ class _ChatScreenState extends State<ChatScreen> {
   late String chatId;
   TextEditingController _messageController = TextEditingController();
   ChatService chatService = ChatService();
+  ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -33,6 +35,11 @@ class _ChatScreenState extends State<ChatScreen> {
     if (_messageController.text.isNotEmpty) {
       chatService.sendMessage(chatId, _messageController.text, widget.receiverId);
       _messageController.clear();
+
+      // Auto-scroll to bottom
+      Future.delayed(Duration(milliseconds: 300), () {
+        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+      });
     }
   }
 
@@ -51,7 +58,9 @@ class _ChatScreenState extends State<ChatScreen> {
                 }
 
                 var messages = snapshot.data!.docs;
+
                 return ListView.builder(
+                  controller: _scrollController,
                   itemCount: messages.length,
                   itemBuilder: (context, index) {
                     var message = messages[index];
@@ -61,12 +70,27 @@ class _ChatScreenState extends State<ChatScreen> {
                       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
                       child: Container(
                         margin: EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-                        padding: EdgeInsets.all(10),
+                        padding: EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           color: isMe ? Colors.blue[300] : Colors.grey[300],
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: Text(message['text']),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              message['text'],
+                              style: TextStyle(fontSize: 16),
+                            ),
+                            SizedBox(height: 5),
+                            Text(
+                              message['timestamp'] != null
+                                  ? DateFormat('hh:mm a').format((message['timestamp'] as Timestamp).toDate())
+                                  : "Sending...",
+                              style: TextStyle(fontSize: 12, color: Colors.black54),
+                            ),
+                          ],
+                        ),
                       ),
                     );
                   },
@@ -88,7 +112,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Icons.send),
+                  icon: Icon(Icons.send, color: Colors.blue),
                   onPressed: _sendMessage,
                 ),
               ],
