@@ -188,14 +188,14 @@ Future<void> updateRideRequestStatus(String requestId, String status) async {
   /// Sends a notification using FCM v1 API
   Future<void> sendNotification(String token, String title, String body) async {
     try {
-      // Load service account credentials
+      // ✅ Load service account credentials
       String jsonString = await rootBundle.loadString('assets/firebase-service-account.json');
       final credentials = ServiceAccountCredentials.fromJson(jsonDecode(jsonString));
 
-      // Authenticate with Google Cloud
+      // ✅ Authenticate with Google Cloud
       final client = await clientViaServiceAccount(credentials, ['https://www.googleapis.com/auth/firebase.messaging']);
 
-      // Create FCM API request
+      // ✅ Create FCM API request
       final url = Uri.parse('https://fcm.googleapis.com/v1/projects/kctrustedcarpool/messages:send');
       final message = {
         "message": {
@@ -207,12 +207,15 @@ Future<void> updateRideRequestStatus(String requestId, String status) async {
         }
       };
 
-      // Send the request
+      // ✅ Send the request and log the response
       final response = await client.post(url, body: jsonEncode(message), headers: {
         "Content-Type": "application/json",
       });
 
-      print("📢 FCM Notification Response: ${response.body}");
+      print("📢 FCM Notification Response: ${response.statusCode}");
+      print("📢 FCM Notification Response Body: ${response.body}");
+      print("📢 FCM Notification Token: $token, Title: $title, Body: $body, Response: ${response.body}");
+
     } catch (e) {
       print("🔥 FCM Error: $e");
     }
@@ -343,3 +346,37 @@ Future<void> updateRideRequestStatus(String requestId, String status) async {
 
 //   print("📢 Notification Sent: ${response.body}");
 // }
+
+
+  // /// Sends a notification using FCM v1 API
+  // Future<void> sendNotification(String token, String title, String body) async {
+  //   try {
+  //     // Load service account credentials
+  //     String jsonString = await rootBundle.loadString('assets/firebase-service-account.json');
+  //     final credentials = ServiceAccountCredentials.fromJson(jsonDecode(jsonString));
+
+  //     // Authenticate with Google Cloud
+  //     final client = await clientViaServiceAccount(credentials, ['https://www.googleapis.com/auth/firebase.messaging']);
+
+  //     // Create FCM API request
+  //     final url = Uri.parse('https://fcm.googleapis.com/v1/projects/kctrustedcarpool/messages:send');
+  //     final message = {
+  //       "message": {
+  //         "token": token,
+  //         "notification": {
+  //           "title": title,
+  //           "body": body,
+  //         }
+  //       }
+  //     };
+
+  //     // Send the request
+  //     final response = await client.post(url, body: jsonEncode(message), headers: {
+  //       "Content-Type": "application/json",
+  //     });
+
+  //     print("📢 FCM Notification Response: ${response.body}");
+  //   } catch (e) {
+  //     print("🔥 FCM Error: $e");
+  //   }
+  // }
