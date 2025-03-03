@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:kctrustedcarpool/cloud_functions/firestore_service.dart';
 
@@ -95,20 +97,72 @@ class RideRequestCard extends StatelessWidget {
                   child: Text("Reject"),
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                 ),
-                IconButton(
-                  icon: Icon(Icons.chat),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ChatScreen(
-                          receiverId: request["userId"]!,
-                          receiverName: "User ${request["userId"]!}", // Replace with actual name from Firestore
-                        ),
-                      ),
-                    );
-                  },
+                StreamBuilder<QuerySnapshot>(
+  stream: FirebaseFirestore.instance
+      .collection('chats')
+      .where('users', arrayContains: FirebaseAuth.instance.currentUser?.uid)
+      .snapshots(),
+  builder: (context, chatSnapshot) {
+    if (!chatSnapshot.hasData) return IconButton(icon: Icon(Icons.chat), onPressed: () {});
+
+    String? chatId;
+    for (var chat in chatSnapshot.data!.docs) {
+      List<dynamic> users = chat['users'];
+      if (users.contains(request["userId"])) {
+        chatId = chat.id; // Found chat between these two users
+        break;
+      }
+    }
+
+    if (chatId == null) return IconButton(icon: Icon(Icons.chat), onPressed: () {});
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('chats')
+          .doc(chatId)
+          .collection('messages')
+          .where('receiverId', isEqualTo: FirebaseAuth.instance.currentUser?.uid)
+          .where('isRead', isEqualTo: false)
+          .snapshots(),
+      builder: (context, messageSnapshot) {
+        int unreadCount = messageSnapshot.hasData ? messageSnapshot.data!.docs.length : 0;
+
+        return Stack(
+          children: [
+            IconButton(
+              icon: Icon(Icons.chat),
+              tooltip: "Chat with Requester",
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ChatScreen(
+                      receiverId: request["userId"]!,
+                      receiverName: request["userName"] ?? "User ${request["userId"]!}", // ✅ Pass actual name if available
+                      receiverProfileUrl: request["userProfileUrl"] ?? "", // ✅ Pass profile URL or empty string
+                    ),
+                  ),
+                );
+              },
+            ),
+            if (unreadCount > 0)
+              Positioned(
+                right: 0,
+                child: CircleAvatar(
+                  backgroundColor: Colors.red,
+                  radius: 10,
+                  child: Text(
+                    "$unreadCount",
+                    style: TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
                 ),
+              ),
+          ],
+        );
+      },
+    );
+  },
+),
               ],
             ),
           ],

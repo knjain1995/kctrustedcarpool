@@ -13,6 +13,22 @@ import 'package:flutter/services.dart';
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
+
+ /// Saves user profile details in Firestore
+  Future<void> saveUserProfile(String name, String email, String? profileUrl) async {
+    String userId = FirebaseAuth.instance.currentUser?.uid ?? "unknown_user";
+
+    await _db.collection('users').doc(userId).set({
+      "name": name,
+      "email": email,
+      "profileUrl": profileUrl ?? "", // ✅ Store profile picture or empty string
+      "fcmToken": await FirebaseMessaging.instance.getToken(), // Store FCM token
+    }, SetOptions(merge: true));
+
+    print("✅ User profile saved successfully!");
+  }
+
+
   /// Allows a user to offer a ride
   Future<void> offerRide(String from, String to, String date, String time, String seats) async {
     try {
@@ -260,6 +276,7 @@ class ChatService {
       "receiverId": receiverId,
       "text": messageText,
       "timestamp": FieldValue.serverTimestamp(),
+      "isRead": false, // ✅ Always include `isRead` when adding a message
     });
   }
 
@@ -272,6 +289,22 @@ class ChatService {
         .orderBy('timestamp', descending: false)
         .snapshots();
   }
+
+  Future<void> markMessagesAsRead(String chatId) async {
+  String currentUserId = FirebaseAuth.instance.currentUser?.uid ?? "unknown_user";
+
+  QuerySnapshot unreadMessages = await _db
+      .collection('chats')
+      .doc(chatId)
+      .collection('messages')
+      .where('receiverId', isEqualTo: currentUserId)
+      .where('isRead', isEqualTo: false)
+      .get();
+
+  for (var doc in unreadMessages.docs) {
+    doc.reference.update({"isRead": true});
+  }
+}
 }
 
 
