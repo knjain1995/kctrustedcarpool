@@ -68,8 +68,10 @@ class _ChatScreenState extends State<ChatScreen> {
     bool isMe = message['senderId'] == FirebaseAuth.instance.currentUser?.uid;
     
     // ✅ Fix: Provide default value for `isRead` if missing
-    bool isRead = message.data().containsKey('isRead') ? message['isRead'] : false;
+    Map<String, dynamic> messageData = message.data() as Map<String, dynamic>? ?? {};
+    bool isRead = messageData.containsKey('isRead') ? messageData['isRead'] : false;
 
+    
     return Row(
       mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
       children: [
