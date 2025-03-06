@@ -4,6 +4,8 @@ import 'package:kctrustedcarpool/screens/home/upcoming_rides.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:kctrustedcarpool/screens/login/login.dart';
 
+import '../profile/profile_screen.dart';
+
 class HomeScreen extends StatefulWidget {
   static const routeName = '/home';
 
@@ -17,7 +19,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<Widget> _pages = [
     UpcomingRidesScreen(),
     MyOffersScreen(),
-    Center(child: Text("Chat Feature (Coming Soon)")), // Placeholder
+    ProfileScreen(),
   ];
 
   void _onTabTapped(int index) {
@@ -50,7 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
         items: [
           BottomNavigationBarItem(icon: Icon(Icons.directions_car), label: "Rides"),
           BottomNavigationBarItem(icon: Icon(Icons.local_offer), label: "Offers"),
-          BottomNavigationBarItem(icon: Icon(Icons.chat), label: "Chat"),
+          BottomNavigationBarItem(icon: Icon(Icons.chat), label: "Profile"),
         ],
       ),
     );

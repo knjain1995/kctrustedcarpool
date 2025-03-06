@@ -29,6 +29,13 @@ class FirestoreService {
   }
 
 
+  /// Fetch user profile from Firestore
+  Future<DocumentSnapshot?> getUserProfile() async {
+    String userId = FirebaseAuth.instance.currentUser?.uid ?? "unknown_user";
+    return _db.collection('users').doc(userId).get();
+  }
+
+
   /// Allows a user to offer a ride
   Future<void> offerRide(String from, String to, String date, String time, String seats) async {
     try {
