@@ -21,11 +21,13 @@ class _ChatScreenState extends State<ChatScreen> {
   TextEditingController _messageController = TextEditingController();
   ChatService chatService = ChatService();
   ScrollController _scrollController = ScrollController();
+  String currentUserProfileUrl = "";
 
   @override
   void initState() {
     super.initState();
     _initializeChat();
+    _fetchCurrentUserProfile();
   }
 
   void _initializeChat() async {
@@ -34,11 +36,33 @@ class _ChatScreenState extends State<ChatScreen> {
     setState(() {}); 
   }
 
+    void _fetchCurrentUserProfile() async {
+    String userId = FirebaseAuth.instance.currentUser?.uid ?? "unknown_user";
+    DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
+    
+    if (userDoc.exists) {
+      setState(() {
+        currentUserProfileUrl = userDoc["profileUrl"] ?? "";
+      });
+    }
+  }
+
+    Future<String> _getChatId() async {
+    List<String> ids = [FirebaseAuth.instance.currentUser!.uid, widget.receiverId];
+    ids.sort();
+    return ids.join("_");
+  }
+
   void _sendMessage() {
     if (_messageController.text.isNotEmpty) {
-      chatService.sendMessage(chatId, _messageController.text, widget.receiverId);
+      FirebaseFirestore.instance.collection('chats').doc(chatId).collection('messages').add({
+        "senderId": FirebaseAuth.instance.currentUser?.uid ?? "unknown_user",
+        "receiverId": widget.receiverId,
+        "text": _messageController.text,
+        "timestamp": FieldValue.serverTimestamp(),
+        "isRead": false,
+      });
       _messageController.clear();
-
       Future.delayed(Duration(milliseconds: 300), () {
         _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
       });
@@ -61,65 +85,73 @@ class _ChatScreenState extends State<ChatScreen> {
 
                 var messages = snapshot.data!.docs;
                 return ListView.builder(
-  controller: _scrollController,
-  itemCount: messages.length,
-  itemBuilder: (context, index) {
-    var message = messages[index];
-    bool isMe = message['senderId'] == FirebaseAuth.instance.currentUser?.uid;
-    
-    // ✅ Fix: Provide default value for `isRead` if missing
-    Map<String, dynamic> messageData = message.data() as Map<String, dynamic>? ?? {};
-    bool isRead = messageData.containsKey('isRead') ? messageData['isRead'] : false;
+                  controller: _scrollController,
+                  itemCount: messages.length,
+                  itemBuilder: (context, index) {
+                    var message = messages[index];
+                    bool isMe = message['senderId'] == FirebaseAuth.instance.currentUser?.uid;
+                    
+                    // ✅ Fix: Provide default value for `isRead` if missing
+                    Map<String, dynamic> messageData = message.data() as Map<String, dynamic>? ?? {};
+                    bool isRead = messageData.containsKey('isRead') ? messageData['isRead'] : false;
 
-    
-    return Row(
-      mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
-      children: [
-        if (!isMe)
-          CircleAvatar(
-            backgroundImage: widget.receiverProfileUrl.isNotEmpty
-                ? NetworkImage(widget.receiverProfileUrl)
-                : null,
-            child: widget.receiverProfileUrl.isEmpty
-                ? Text(widget.receiverName[0].toUpperCase())
-                : null,
-          ),
-        Container(
-          margin: EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-          padding: EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: isMe ? Colors.blue[300] : Colors.grey[300],
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(message['text'], style: TextStyle(fontSize: 16)),
-              SizedBox(height: 5),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    message['timestamp'] != null
-                        ? DateFormat('hh:mm a').format((message['timestamp'] as Timestamp).toDate())
-                        : "Sending...",
-                    style: TextStyle(fontSize: 12, color: Colors.black54),
-                  ),
-                  if (isMe)
-                    Icon(
-                      isRead ? Icons.done_all : Icons.check, // ✅ Fix: Use the default `isRead`
-                      size: 16,
-                      color: isRead ? Colors.blue : Colors.black54,
-                    ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  },
-);
+                    return Row(
+                      mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+                      children: [
+                        if (!isMe)
+                          CircleAvatar(
+                            backgroundImage: widget.receiverProfileUrl.isNotEmpty
+                                ? NetworkImage(widget.receiverProfileUrl)
+                                : null,
+                            child: widget.receiverProfileUrl.isEmpty
+                                ? Icon(Icons.person)
+                                : null,
+                          ),
+                        Container(
+                          margin: EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                          padding: EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: isMe ? Colors.blue[300] : Colors.grey[300],
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(message['text'], style: TextStyle(fontSize: 16)),
+                              SizedBox(height: 5),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    message['timestamp'] != null
+                                        ? DateFormat('hh:mm a').format((message['timestamp'] as Timestamp).toDate())
+                                        : "Sending...",
+                                    style: TextStyle(fontSize: 12, color: Colors.black54),
+                                  ),
+                                  if (isMe)
+                                    Icon(
+                                      message['isRead'] == true ? Icons.done_all : Icons.check,
+                                      size: 16,
+                                      color: message['isRead'] == true ? Colors.blue : Colors.black54,
+                                    ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (isMe)
+                          CircleAvatar(
+                            backgroundImage: currentUserProfileUrl.isNotEmpty
+                                ? NetworkImage(currentUserProfileUrl)
+                                : null,
+                            child: currentUserProfileUrl.isEmpty
+                                ? Icon(Icons.person)
+                                : null,
+                          ),
+                      ],
+                    );
+                  },
+                );
               },
             ),
           ),
@@ -148,3 +180,81 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 }
+
+
+//                     return Row(
+//                       mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+//                       children: [
+//                         if (!isMe)
+//                           CircleAvatar(
+//                             backgroundImage: widget.receiverProfileUrl.isNotEmpty
+//                                 ? NetworkImage(widget.receiverProfileUrl)
+//                                 : null,
+//                             child: widget.receiverProfileUrl.isEmpty
+//                                 ? Text(widget.receiverName[0].toUpperCase())
+//                                 : null,
+//                           ),
+//                         Container(
+//                           margin: EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+//                           padding: EdgeInsets.all(12),
+//                           decoration: BoxDecoration(
+//                             color: isMe ? Colors.blue[300] : Colors.grey[300],
+//                             borderRadius: BorderRadius.circular(10),
+//                           ),
+//                           child: Column(
+//                             crossAxisAlignment: CrossAxisAlignment.start,
+//                             children: [
+//                               Text(message['text'], style: TextStyle(fontSize: 16)),
+//                               SizedBox(height: 5),
+//                               Row(
+//                                 mainAxisSize: MainAxisSize.min,
+//                                 children: [
+//                                   Text(
+//                                     message['timestamp'] != null
+//                                         ? DateFormat('hh:mm a').format((message['timestamp'] as Timestamp).toDate())
+//                                         : "Sending...",
+//                                     style: TextStyle(fontSize: 12, color: Colors.black54),
+//                                   ),
+//                                   if (isMe)
+//                                     Icon(
+//                                       isRead ? Icons.done_all : Icons.check, // ✅ Fix: Use the default `isRead`
+//                                       size: 16,
+//                                       color: isRead ? Colors.blue : Colors.black54,
+//                                     ),
+//                                 ],
+//                               ),
+//                             ],
+//                           ),
+//                         ),
+//                       ],
+//                     );
+//                   },
+//                 );
+//               },
+//             ),
+//           ),
+//           Padding(
+//             padding: const EdgeInsets.all(8.0),
+//             child: Row(
+//               children: [
+//                 Expanded(
+//                   child: TextField(
+//                     controller: _messageController,
+//                     decoration: InputDecoration(
+//                       hintText: "Type a message...",
+//                       border: OutlineInputBorder(),
+//                     ),
+//                   ),
+//                 ),
+//                 IconButton(
+//                   icon: Icon(Icons.send, color: Colors.blue),
+//                   onPressed: _sendMessage,
+//                 ),
+//               ],
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }
